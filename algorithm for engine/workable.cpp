@@ -186,4 +186,119 @@ void removeCourse(unordered_map<string, set<string > > &courseGraph, map<string,
     // Remove the course from the graph
     courseGraph.erase(course);
 
-    // Remove the course from the
+    // Remove the course from the coloring
+    coloring.erase(course);
+
+    // Remove the course from the adjacency lists of other courses
+    for (auto &pair : courseGraph) {
+        pair.second.erase(course);
+    }
+
+    // Recolor the graph
+    int chromaticNumber = 0;
+    for (const auto &pair : courseGraph) {
+        colorCourseGraph(courseGraph, coloring, pair.first, chromaticNumber);
+    }
+}
+
+void setHoliday(unordered_map<string, set<string > > &courseGraph, map<string, int> &coloring, const string &day) {
+    // Remove the day from the graph
+    for (auto &pair : courseGraph) {
+        pair.second.erase(day);
+    }
+
+    // Recolor the graph
+    int chromaticNumber = 0;
+    for (const auto &pair : courseGraph) {
+        colorCourseGraph(courseGraph, coloring, pair.first, chromaticNumber);
+    }
+}
+
+// Main function and other code follows...
+
+int main() {
+    string inputFileName;
+    cout << "Enter the name of the input file: ";
+    // cin >> inputFileName;
+    inputFileName = "input_file.txt";
+
+    ifstream inputFile(inputFileName);
+
+    if (!inputFile.is_open()) {
+        cerr << "Error: Unable to open file " << inputFileName << endl;
+        return 1;
+    }
+
+    int numCourses;
+    inputFile >> numCourses;
+
+    vector<string> courseNames(numCourses);
+    for (int i = 0; i < numCourses; ++i) {
+        inputFile >> courseNames[i];
+    }
+
+    unordered_map<string, set<string> > courseGraph;
+
+    for (int i = 0; i < numCourses; ++i) {
+        for (int j = i + 1; j < numCourses; ++j) {
+            int numCommonStudents;
+            inputFile >> numCommonStudents;
+
+            set<string> commonStudents;
+            for (int k = 0; k < numCommonStudents; ++k) {
+                string studentName;
+                inputFile >> studentName;
+                commonStudents.insert(studentName);
+            }
+
+            if (!commonStudents.empty()) {
+                courseGraph[courseNames[i]].insert(courseNames[j]);
+                courseGraph[courseNames[j]].insert(courseNames[i]);
+            }
+        }
+    }
+
+    map<string, int> coloring;
+    int chromaticNumber = 0;
+
+    for (const auto &entry : courseGraph) {
+        const string &node = entry.first;
+        if (coloring.find(node) == coloring.end()) {
+            colorCourseGraph(courseGraph, coloring, node, chromaticNumber);
+        }
+    }
+
+    cout << "\nColored graph representation:\n";
+    for (const auto &entry : coloring) {
+        cout << entry.first << " is colored with color " << entry.second << endl;
+    }
+
+    int numRooms;
+    cout << "Enter the number of available rooms: ";
+    cin >> numRooms;
+
+    vector<int> availableRooms(numRooms);
+    cout << "Enter the names of available rooms:\n";
+    for (int i = 0; i < numRooms; ++i) {
+        cin >> availableRooms[i];
+    }
+
+    cout << "Original timetable\n";
+    displayCourseScheduleWithRooms(courseGraph, coloring, chromaticNumber, availableRooms);
+    
+    cout<<"Enter the course to be removed: ";
+    string course;
+    cin>>course;
+    removeCourse(courseGraph, coloring, course);
+    cout << "Updated timetable\n";
+    displayCourseScheduleWithRooms(courseGraph, coloring, chromaticNumber, availableRooms);
+
+    cout << "Enter the day to set as a holiday: ";
+    string holiday;
+    cin >> holiday;
+    setHoliday(courseGraph, coloring, holiday);
+    cout << "Updated timetable after setting holiday\n";
+    displayCourseScheduleWithRooms(courseGraph, coloring, chromaticNumber, availableRooms);
+
+    return 0;
+}
