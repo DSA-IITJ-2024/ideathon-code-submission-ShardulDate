@@ -10,14 +10,14 @@ using namespace std;
 using std::to_string;
 
 // Structure to represent a course schedule entry with room number
-struct ScheduleEntry {
+struct CourseScheduleEntry {
     string courseName;
     string classTime;
     int roomNumber;
 };
 
 // Function to perform graph coloring using backtracking
-void colorGraph(const unordered_map<string, set<string > > &courseGraph, map<string, int> &coloring, const string &node, int &chromaticNumber) {
+void colorCourseGraph(const unordered_map<string, set<string > > &courseGraph, map<string, int> &coloring, const string &node, int &chromaticNumber) {
     set<int> usedColors;
 
     // Check colors of adjacent nodes
@@ -39,13 +39,13 @@ void colorGraph(const unordered_map<string, set<string > > &courseGraph, map<str
     // Recursively color the adjacent nodes
     for (const string &adjacentCourse : courseGraph.at(node)) {
         if (coloring.find(adjacentCourse) == coloring.end()) {
-            colorGraph(courseGraph, coloring, adjacentCourse, chromaticNumber);
+            colorCourseGraph(courseGraph, coloring, adjacentCourse, chromaticNumber);
         }
     }
 }
 
 // Function to display the schedule in a tabular form with auto-assigned room numbers
-void displayScheduleWithRooms(const unordered_map<string, set<string> > &courseGraph, const map<string, int> &coloring,
+void displayCourseScheduleWithRooms(const unordered_map<string, set<string> > &courseGraph, const map<string, int> &coloring,
                               int chromaticNumber, const vector<int> &availableRooms) {
     cout << "\nNumber of time slots needed: " << chromaticNumber << endl;
 
@@ -56,7 +56,7 @@ void displayScheduleWithRooms(const unordered_map<string, set<string> > &courseG
     }
 
     // Map room numbers to their corresponding time slots
-    map<int, vector<ScheduleEntry> > scheduleWithRooms;
+    map<int, vector<CourseScheduleEntry> > scheduleWithRooms;
 
     int currentDay = 1; // 1 represents Monday
     int currentHour = 8;
@@ -81,7 +81,7 @@ void displayScheduleWithRooms(const unordered_map<string, set<string> > &courseG
                 int roomIndex = (i % availableRooms.size());
                 int roomNumber = availableRooms[roomIndex];
 
-                ScheduleEntry entry;
+                CourseScheduleEntry entry;
                 entry.courseName = courseName;
                 entry.classTime = to_string(currentHour) + ":" + (currentMinute < 10 ? "0" : "") + to_string(currentMinute);
                 entry.roomNumber = roomNumber;
@@ -182,123 +182,8 @@ void displayScheduleWithRooms(const unordered_map<string, set<string> > &courseG
     }
 }
 
-void dropCourse(unordered_map<string, set<string > > &courseGraph, map<string, int> &coloring, const string &course) {
+void removeCourse(unordered_map<string, set<string > > &courseGraph, map<string, int> &coloring, const string &course) {
     // Remove the course from the graph
     courseGraph.erase(course);
 
-    // Remove the course from the coloring
-    coloring.erase(course);
-
-    // Remove the course from the adjacency lists of other courses
-    for (auto &pair : courseGraph) {
-        pair.second.erase(course);
-    }
-
-    // Recolor the graph
-    int chromaticNumber = 0;
-    for (const auto &pair : courseGraph) {
-        colorGraph(courseGraph, coloring, pair.first, chromaticNumber);
-    }
-}
-
-void declareHoliday(unordered_map<string, set<string > > &courseGraph, map<string, int> &coloring, const string &day) {
-    // Remove the day from the graph
-    for (auto &pair : courseGraph) {
-        pair.second.erase(day);
-    }
-
-    // Recolor the graph
-    int chromaticNumber = 0;
-    for (const auto &pair : courseGraph) {
-        colorGraph(courseGraph, coloring, pair.first, chromaticNumber);
-    }
-}
-
-// Main function and other code follows...
-
-int main() {
-    string inputFileName;
-    cout << "Enter the name of the input file: ";
-    // cin >> inputFileName;
-    inputFileName = "input_file.txt";
-
-    ifstream inputFile(inputFileName);
-
-    if (!inputFile.is_open()) {
-        cerr << "Error: Unable to open file " << inputFileName << endl;
-        return 1;
-    }
-
-    int numCourses;
-    inputFile >> numCourses;
-
-    vector<string> courseNames(numCourses);
-    for (int i = 0; i < numCourses; ++i) {
-        inputFile >> courseNames[i];
-    }
-
-    unordered_map<string, set<string> > courseGraph;
-
-    for (int i = 0; i < numCourses; ++i) {
-        for (int j = i + 1; j < numCourses; ++j) {
-            int numCommonStudents;
-            inputFile >> numCommonStudents;
-
-            set<string> commonStudents;
-            for (int k = 0; k < numCommonStudents; ++k) {
-                string studentName;
-                inputFile >> studentName;
-                commonStudents.insert(studentName);
-            }
-
-            if (!commonStudents.empty()) {
-                courseGraph[courseNames[i]].insert(courseNames[j]);
-                courseGraph[courseNames[j]].insert(courseNames[i]);
-            }
-        }
-    }
-
-    map<string, int> coloring;
-    int chromaticNumber = 0;
-
-    for (const auto &entry : courseGraph) {
-        const string &node = entry.first;
-        if (coloring.find(node) == coloring.end()) {
-            colorGraph(courseGraph, coloring, node, chromaticNumber);
-        }
-    }
-
-    cout << "\nColored graph representation:\n";
-    for (const auto &entry : coloring) {
-        cout << entry.first << " is colored with color " << entry.second << endl;
-    }
-
-    int numRooms;
-    cout << "Enter the number of available rooms: ";
-    cin >> numRooms;
-
-    vector<int> availableRooms(numRooms);
-    cout << "Enter the names of available rooms:\n";
-    for (int i = 0; i < numRooms; ++i) {
-        cin >> availableRooms[i];
-    }
-
-    cout << "Original timetable\n";
-    displayScheduleWithRooms(courseGraph, coloring, chromaticNumber, availableRooms);
-    
-    cout<<"Enter the course to be dropped: ";
-    string course;
-    cin>>course;
-    dropCourse(courseGraph, coloring, course);
-    cout << "Updated timetable\n";
-    displayScheduleWithRooms(courseGraph, coloring, chromaticNumber, availableRooms);
-
-    cout << "Enter the day to declare as a holiday: ";
-    string holiday;
-    cin >> holiday;
-    declareHoliday(courseGraph, coloring, holiday);
-    cout << "Updated timetable after declaring holiday\n";
-    displayScheduleWithRooms(courseGraph, coloring, chromaticNumber, availableRooms);
-
-    return 0;
-}
+    // Remove the course from the
