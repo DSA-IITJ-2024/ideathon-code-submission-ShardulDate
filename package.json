@@ -1,0 +1,21 @@
+{
+  "name": "venkatesh",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.17.1",
+    "mongoose": "^8.3.2",
+    "mysql": "^2.18.1"
+  },
+  "devDependencies": {
+    "lite-server": "^2.6.1"
+  }
+}
